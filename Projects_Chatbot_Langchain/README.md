@@ -1,1 +1,1 @@
-
+This Jupyter Notebook implements a chatbot for Université Internationale de Rabat (UIR) using LangChain. It processes university-related documents, retrieves relevant information, and generates responses using a large language model (LLM). The code includes document embedding, vector storage, and user query handling for efficient retrieval-based responses. 
