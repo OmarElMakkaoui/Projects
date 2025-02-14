@@ -1,4 +1,4 @@
-Heuristic.py: Implements heuristic optimization algorithms for solving three optimization problems:
+Heuristic.py: Implements heuristic optimization algorithms for solving three optimization problems with :
 -Hill Climbing (HC)
 -Greedy Hill Climbing (GHC)
 -Simulated Annealing (SA)
