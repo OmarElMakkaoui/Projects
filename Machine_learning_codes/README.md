@@ -2,4 +2,4 @@ CNN code:  implements a Convolutional Neural Network (CNN) to classify handwritt
 
 LDA code : trains an LDA classifier by computing class means and scatter matrices, and projects the data into a lower-dimensional space for better class separation. The trained model is then used to classify test samples based on their distance from projected class centroids. 
 
-ADA code : this first trains a single decision tree for baseline classification, then builds an AdaBoost ensemble model, iteratively updating sample weights to improve weak learners.
+ADA code : this first trains a single decision tree for baseline classification, then builds an AdaBoost ensemble model, iteratively updating sample weights to improve weak learners. 
