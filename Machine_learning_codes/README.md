@@ -1,1 +1,1 @@
-
+CNN code:  implements a Convolutional Neural Network (CNN) to classify handwritten digits (0-9) from the MNIST dataset. It loads and preprocesses the dataset, normalizing the pixel values and converting labels into a categorical format. The model follows a LeNet-inspired architecture, using two convolutional layers
