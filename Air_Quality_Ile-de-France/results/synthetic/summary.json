@@ -1,0 +1,61 @@
+{
+  "n_days": 10352,
+  "dropped_fraction": 0.0226586102719033,
+  "cv_meteorology_only": {
+    "r2": -0.07901122017963019,
+    "rmse": 11.3692460834674,
+    "mae": 9.049053798666398
+  },
+  "cv_meteorology_time_calendar": {
+    "r2": 0.42610436087149073,
+    "rmse": 8.650009779286561,
+    "mae": 6.719107441209749
+  },
+  "trend_1995_2019": {
+    "slope_per_year": -0.906935270290842,
+    "ci95": [
+      -0.9491209379474101,
+      -0.8653646766838061
+    ],
+    "mann_kendall_tau": -0.7797993311036789,
+    "mann_kendall_p": 3.1480762490576923e-90,
+    "lag1_autocorr_monthly": -0.04266957051865484
+  },
+  "bau_model_cv_2017_2019": {
+    "r2": 0.34604260768456196,
+    "rmse": 6.73023451931201,
+    "bias": -0.05308677776391102
+  },
+  "lockdowns": [
+    {
+      "period": "Lockdown 1",
+      "start": "2020-03-17",
+      "end": "2020-05-10",
+      "n_days": 52,
+      "observed_mean": 17.269,
+      "bau_mean": 29.767,
+      "deviation": -12.497,
+      "deviation_pct": -41.984
+    },
+    {
+      "period": "Lockdown 2",
+      "start": "2020-10-30",
+      "end": "2020-12-14",
+      "n_days": 44,
+      "observed_mean": 20.643,
+      "bau_mean": 25.848,
+      "deviation": -5.205,
+      "deviation_pct": -20.138
+    },
+    {
+      "period": "Lockdown 3",
+      "start": "2021-04-03",
+      "end": "2021-05-02",
+      "n_days": 29,
+      "observed_mean": 24.614,
+      "bau_mean": 30.461,
+      "deviation": -5.847,
+      "deviation_pct": -19.195
+    }
+  ]
+}
