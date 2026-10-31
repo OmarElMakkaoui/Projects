@@ -74,12 +74,65 @@ With the same 300 calls, BO returns the exact optimum in most runs on simulators
 and 1. It is the only method that keeps improving after the local searches have
 stalled, because its acquisition step looks globally instead of moving one unit at
 a time. Simulator 2's optimum is a very narrow well (0.0001 against 0.05 for the
-best 1% of configurations): no method lands exactly in it, but BO's answer is beaten by 6–11×
-fewer configurations than the local searches' answers. The price of BO is its own compute: about 0.07 s per
-iteration for a 300-point GP here, which is negligible next to a real simulation
-but not next to this analytic simulator.
+best 1% of configurations). No method lands exactly in it, but 6–11× fewer
+configurations beat BO's answer than beat the local searches' answers. The price of
+BO is its own compute: about 65 ms per iteration on one core, averaged over a
+300-call run. That is negligible next to a real simulation, but not next to this
+analytic simulator.
 
-<!-- MULTISTART -->
+### Parallel multi-start with MPI
+
+`run_mpi.py` gives each process its own starting point and keeps the best of the P
+answers. The searches don't communicate until the final `Gather`, so the parallelism
+is embarrassingly parallel and the question is what it buys in solution quality. Two
+regimes, 30 repetitions each (`benchmarks/bench_multistart.py`):
+
+- **weak scaling**: 300 calls per process, so total work grows with P;
+- **strong scaling**: 4,800 calls in total, split evenly, so P = 32 means 32 searches of 150 calls.
+
+![Multi-start](results/multistart.png)
+
+| Weak scaling, P(exact optimum) | P = 1 | P = 8 | P = 32 |
+|---|---|---|---|
+| HC, simulator 0 / 1 / 2 | 7% / 20% / 10% | 50% / 87% / 43% | **90% / 100% / 80%** |
+| SA, simulator 0 / 1 / 2 | 7% / 10% / 0% | 23% / 63% / 7% | 67% / 93% / 23% |
+
+- **Restarts follow the independent-trials law.** The P runs are independent, so the
+  success probability should be 1 − (1 − p)^P. For HC on simulator 0, p = 0.067
+  predicts 89% at P = 32; the measured value is 90%.
+- **Parallel HC beats sequential BO on wall time and on the hardest simulator.**
+  32 hill climbers finish in the time of one (66–120 calls each) and reach 80% on
+  simulator 2, where BO with 300 calls never finds the optimum. BO remains far ahead
+  per call: 60–73% on simulators 0 and 1 with 300 calls in total.
+- **Splitting a fixed budget helps only while each search can finish.** Under strong
+  scaling, HC improves all the way to P = 32, because it reaches its local optimum
+  in fewer than 150 calls. SA and TabuSA collapse at P = 32: their cooling schedules
+  were tuned for 300 calls, and after 150 the temperature is still high, so they
+  return points from a near-random walk. GHC drops too, because steepest descent
+  needs up to ~250 calls to reach a local optimum. The cooling schedule has to be
+  scaled to the per-process budget.
+
+### Wall-clock scaling
+
+`benchmarks/bench_mpi_scaling.py` splits 1,600 calls of SA across P processes. Each
+call sleeps 5 ms to stand in for a real simulation; the analytic simulator itself
+takes microseconds, so without the sleep the timing would only measure Python and
+MPI start-up. The timer runs from a barrier after start-up to the final reduction
+(median of 3 runs).
+
+![MPI scaling](results/mpi_scaling.png)
+
+| P | 1 | 2 | 4 | 8 | 16 |
+|---|---|---|---|---|---|
+| wall time (s) | 8.71 | 4.33 | 2.20 | 1.14 | 0.70 |
+| speedup | 1.00 | 2.01 | 3.97 | 7.62 | 12.4 |
+| efficiency | 100% | 101% | 99% | 95% | 78% |
+
+Efficiency is ≥ 95% up to 8 processes. At 16 it drops to 78%: the measurements were
+made in a 2-core container, so 16 processes contend for the CPU during the
+search's own bookkeeping and the final collectives. On a cluster with one core per
+rank, and real simulations lasting seconds rather than milliseconds, that overhead
+would be negligible.
 
 ## Reproduce
 
