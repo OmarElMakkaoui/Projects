@@ -34,7 +34,7 @@ FLOOR = 1 / 1_252_440  # one configuration: plotted value when the optimum is fo
 def convergence():
     runs = pd.read_csv(os.path.join(RES, "methods_runs.csv"))
     cps = [int(c.split("@")[1]) for c in runs.columns if c.startswith("rq@")]
-    fig, axes = plt.subplots(1, 3, figsize=(13, 3.8), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(14, 3.8), sharey=True)
     for k, ax in enumerate(axes):
         for m, (color, marker) in STYLE.items():
             g = runs[(runs.sim == k) & (runs.method == m)]
@@ -45,9 +45,9 @@ def convergence():
         ax.set_xlabel("simulator evaluations")
         ax.axhline(FLOOR, color=MUTED, lw=0.8, ls=":")
     axes[0].set_ylabel("median fraction of configurations\nbetter than incumbent (log)")
-    axes[0].text(cps[-1], FLOOR * 1.4, "global optimum", ha="right", va="bottom",
+    axes[0].text(cps[0], FLOOR * 1.4, "global optimum found", ha="left", va="bottom",
                  fontsize=8, color=MUTED)
-    axes[-1].legend(loc="upper right", ncol=1)
+    axes[-1].legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.suptitle("Single-start search quality vs evaluation budget (30 starts each)",
                  x=0.01, ha="left", fontweight="bold")
     fig.tight_layout()
@@ -57,7 +57,7 @@ def convergence():
 
 def multistart():
     df = pd.read_csv(os.path.join(RES, "multistart.csv"))
-    fig, axes = plt.subplots(2, 3, figsize=(13, 6.4), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 3, figsize=(14, 6.4), sharex=True, sharey=True)
     for r, regime in enumerate(["weak", "strong"]):
         for k in range(3):
             ax = axes[r, k]
@@ -74,7 +74,7 @@ def multistart():
                 ax.set_xlabel("MPI processes P")
         axes[r, 0].set_ylabel(("300 evals per process" if regime == "weak"
                                else "4,800 evals in total") + "\nP(global optimum found)")
-    axes[0, -1].legend(loc="lower right")
+    axes[0, -1].legend(loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.suptitle("Parallel multi-start: probability of returning the exact optimum (30 repetitions)",
                  x=0.01, ha="left", fontweight="bold")
     fig.tight_layout()
