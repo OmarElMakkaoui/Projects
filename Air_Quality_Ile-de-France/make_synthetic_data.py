@@ -72,6 +72,11 @@ def make(seed: int = 0, start="1995-01-01", end="2023-12-31") -> pd.DataFrame:
     # On the additive scale the analysis works on, the expected NO2 decline is
     # TRUE_SLOPE times the average non-emission multiplier (exp of met + traffic + noise).
     df.attrs["true_additive_slope"] = TRUE_SLOPE * float(multiplier[days <= "2019-12-31"].mean())
+    # E[NO2 | day, weather, weekday]: the best any model of these inputs can do.
+    # The AR(1) noise has stationary variance 0.18^2 / (1 - 0.5^2), so
+    # E[exp(noise)] = exp(variance / 2).
+    noise_var = 0.18 ** 2 / (1 - 0.5 ** 2)
+    df.attrs["conditional_mean"] = baseline * np.exp(met + traffic + lockdown + noise_var / 2)
     # ~2 % missing values, as in the real extraction
     for c in ["CNO2", "FFM", "DXY"]:
         df.loc[rng.random(n) < 0.007, c] = np.nan

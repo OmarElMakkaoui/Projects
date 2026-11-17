@@ -97,12 +97,73 @@ this version fixes:
 4. **Wind direction** was modelled with an ordinary spline, which treats 359° and 1°
    as far apart; it now uses a cyclic spline.
 
+## Neural network baseline and optimizer comparison (2026 extension)
+
+`nn_benchmark.py` asks two questions on the same prediction task (daily NO₂ from
+time, weather, day of year and weekday):
+
+1. Does a small neural network beat the GAM and a Random Forest?
+2. For that network, how do SGD, Adam and **K-FAC** compare under the same
+   training budget, in accuracy, convergence speed and compute?
+
+K-FAC (`kfac.py`, written from Martens & Grosse, 2015) approximates each layer's
+block of the Fisher information matrix by a Kronecker product A ⊗ G of two small
+matrices: the covariance of the layer inputs and of the gradients w.r.t. its
+outputs. The update G⁻¹ ∇W A⁻¹ is then a cheap approximation of the natural
+gradient. The implementation uses the true Fisher (targets sampled from the
+model), running averages of the factors, Tikhonov damping and KL clipping.
+`tests/test_kfac.py` checks it against the exact answer: for a linear model,
+one undamped step must land on the least-squares solution.
+
+**Protocol.** Years are split into blocks, so no test day has its neighbours in
+the training set. Test: 1999, 2004, 2009, 2014, 2019. Validation: 1998, 2003,
+2008, 2013, 2018. Training: the 19 other years. The MLP is 15 → 64 → 64 → 1 with
+ReLU. Every optimizer gets the same budget: 150 epochs, batch size 128. Learning
+rates are chosen on the validation years (2 seeds per value), as is the stopping
+epoch. The selected settings are then rerun with 5 seeds and scored on the test
+years at the epoch where validation error was lowest.
+
+**Results on the synthetic data.** On synthetic data the true conditional mean
+is known, so the table also shows the noise floor: the RMSE of a perfect model
+of these inputs.
+
+| Model | Test RMSE (µg/m³) | R² | Epochs to within 2% of best | Training time | Time per epoch |
+|---|---|---|---|---|---|
+| Noise floor (true conditional mean) | 8.17 | | | | |
+| GAM | 8.47 | 0.554 | | 1.7 s | |
+| Random Forest (300 trees) | 8.75 | 0.524 | | 6.0 s | |
+| MLP + SGD (momentum 0.9, lr 0.01) | 8.23 ± 0.02 | 0.578 | 4 | 4.4 s | 29 ms |
+| MLP + Adam (lr 1e-4) | 8.22 ± 0.01 | 0.580 | 14 | 7.4 s | 49 ms |
+| MLP + K-FAC (lr 0.003) | 8.22 ± 0.01 | 0.580 | **1** | 7.9 s | 53 ms |
+
+![Optimizer convergence](results/synthetic_mlp/optimizer_convergence.png)
+
+- **The MLP beats both baselines** and gets within 0.6% of the noise floor. The
+  synthetic NO₂ is multiplicative in weather and weekday, while the GAM is
+  additive on the concentration scale, so the GAM cannot represent the
+  interactions the network learns.
+- **All three optimizers reach the same accuracy with early stopping.** They
+  differ in how fast they get there. K-FAC is within 2% of its best validation
+  error after one epoch, against 4 for SGD and 14 for Adam.
+- **The curvature information is cheap here.** Factors are refreshed every 10
+  steps and inverted every 50, so K-FAC costs 7% more per epoch than Adam and
+  needs 10% more backward passes.
+- **K-FAC also overfits fastest.** Its training RMSE falls to 4.3 after 150
+  epochs, far below the noise floor, and its test RMSE rises to 10.6. Adam (8.24)
+  and SGD (8.44) degrade much less over the same budget. Without early stopping
+  or regularization, faster optimization is a liability on a dataset this small.
+
+Limitations: a single synthetic dataset; a small MLP, where Kronecker factors
+are cheap to invert; learning rate tuned but K-FAC damping and update intervals
+fixed; CPU timings from a 2-core container.
+
 ## Reproduce
 
 ```bash
 pip install -r requirements.txt
 python make_synthetic_data.py                       # or put the real file in data/
 python run_pipeline.py --data data/synthetic_no2_paris.csv --out results/synthetic
+python nn_benchmark.py --data data/synthetic_no2_paris.csv --out results/synthetic_mlp   # ~3 min on 2 cores
 python -m pytest -q tests
 ```
 

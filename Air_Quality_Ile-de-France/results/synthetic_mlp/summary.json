@@ -1,0 +1,15 @@
+{
+  "n_days": {
+    "train": 6784,
+    "val": 1792,
+    "test": 1776
+  },
+  "selected_lr": {
+    "SGD": 0.01,
+    "Adam": 0.0001,
+    "K-FAC": 0.003
+  },
+  "oracle_test_rmse": 8.170450793671133,
+  "epochs": 150,
+  "batch": 128
+}
